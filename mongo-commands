@@ -1,0 +1,133 @@
+// 1 десять самых больших стран
+db.collection.aggregate([
+    {
+      $sort: { "area": -1  }
+    },
+    {
+        $limit: 10
+    }
+])
+// 2 Группировка по региону
+db.collection.aggregate([
+     {
+    $group:
+      {
+        _id: "$region",
+            count: {
+            $count: {},
+            },
+      },
+  },
+])
+
+
+// 3  Соседние станы с Францией и возможность платить евро
+db.collection.find({
+ { borders: { $all: ["FRA"]} , currency: {$all: ["EUR"] } }
+})
+
+// 4 государства расположенные в определенной широте (в данном случае примерно около тихого океана)
+db.collection.find({
+ {
+ 'latlng.1': {
+  $gt: -200,
+  $lt: -100
+ }
+}
+})
+
+
+//5 площадь регионов
+db.collection.aggregate([
+[
+  {
+    $project: {
+      _id: 0,
+      demonym: 1,
+      area: 1,
+      region: 1,
+      count: {
+        $add: [1],
+      },
+    },
+  },
+  {
+    $group: {
+      _id: "$region",
+      sum: {
+        $sum: {
+          $sum: "$area",
+        },
+      },
+    },
+  },
+]
+])
+
+
+
+//6 Количество различных номеров
+db.collection.aggregate([
+
+  {
+    $project:
+      {
+        size: {
+          $size: "$callingCode",
+        },
+        demonym: 1,
+      },
+  },
+  {
+    $sort:
+      {
+        size: -1,
+      },
+  },
+
+])
+
+//7 Количество закрытых стран в регионе
+db.collection.aggregate([
+  {
+    $match: {
+      landlocked: true,
+    },
+  },
+  {
+    $group: {
+      _id: "$region",
+      count: {
+        $count: {},
+      },
+    },
+  },
+])
+
+// 8 Вывод всех языков 
+db.collection.aggregate([
+  {
+    $project: {
+      _id: 1,
+      languages: {
+        $objectToArray: "$languages",
+      },
+    },
+  },
+  {
+    $unwind: "$languages",
+  },
+  {
+    $group: {
+      _id: null,
+      languages: {
+        $addToSet: "$languages.v",
+      },
+    },
+  },
+  {
+    $sort: {
+      languages: -1,
+    },
+  },
+])
